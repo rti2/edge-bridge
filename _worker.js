@@ -6,14 +6,14 @@ import { connect } from 'cloudflare:sockets';
 // [Windows] Press "Win + R", input cmd and run:  Powershell -NoExit -Command "[guid]::NewGuid()"
 let userID = '1f489b96-80a3-44eb-b32a-b454341e200c';
 
-const proxyIPs = [ 'zula.ir', '162.159.247.225']; // I dont know this is a bug or what. But edgetunnel uses this as a CleanIP not ProxyIP, So feel free to fill in here with Clean IPs
+const CleanIPs = [ 'zula.ir', '162.159.247.225']; // I dont know this is a bug or what. But edgetunnel uses this as a CleanIP not CleanIP, So feel free to fill in here with Clean IPs
 
-// if you want to use ipv6 or single proxyIP, please add comment at this line and remove comment at the next line
-let proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
-// use single proxyIP instead of random
-// let proxyIP = 'cdn.xn--b6gac.eu.org';
-// ipv6 proxyIP example remove comment to use
-// let proxyIP = "[2a01:4f8:c2c:123f:64:5:6810:c55a]"
+// if you want to use ipv6 or single CleanIP, please add comment at this line and remove comment at the next line
+let CleanIP = CleanIPs[Math.floor(Math.random() * CleanIPs.length)];
+// use single CleanIP instead of random
+// let CleanIP = 'cdn.xn--b6gac.eu.org';
+// ipv6 CleanIP example remove comment to use
+// let CleanIP = "[2a01:4f8:c2c:123f:64:5:6810:c55a]"
 
 let dohURL = 'https://dns.google/dns-query'; // https://cloudflare-dns.com/dns-query or https://dns.google/dns-query or https://rethinkdns.com/configure
 
@@ -24,7 +24,7 @@ if (!isValidUUID(userID)) {
 export default {
 	/**
 	 * @param {import("@cloudflare/workers-types").Request} request
-	 * @param {{UUID: string, proxyIP: string, DNS_RESOLVER_URL: string, NODE_ID: int, API_HOST: string, API_TOKEN: string}} env
+	 * @param {{UUID: string, CleanIP: string, DNS_RESOLVER_URL: string, NODE_ID: int, API_HOST: string, API_TOKEN: string}} env
 	 * @param {import("@cloudflare/workers-types").ExecutionContext} ctx
 	 * @returns {Promise<Response>}
 	 */
@@ -32,7 +32,7 @@ export default {
 		// uuid_validator(request);
 		try {
 			userID = env.UUID || userID;
-			proxyIP = env.PROXYIP || proxyIP;
+			CleanIP = env.CleanIP || CleanIP;
 			dohURL = env.DNS_RESOLVER_URL || dohURL;
 			let userID_Path = userID;
 			if (userID.includes(',')) {
@@ -85,7 +85,7 @@ export default {
 						newHeaders.set('cf-connecting-ip', '1.2.3.4');
 						newHeaders.set('x-forwarded-for', '1.2.3.4');
 						newHeaders.set('x-real-ip', '1.2.3.4');
-						newHeaders.set('referer', 'https://www.google.com/search?q=edtunnel');
+						newHeaders.set('referer', 'https://www.google.com/search?q=EDge-bridge');
 						// Use fetch to proxy the request to 15 different domains
 						const proxyUrl = 'https://' + randomHostname + url.pathname + url.search;
 						let modifiedRequest = new Request(proxyUrl, {
@@ -142,7 +142,7 @@ export async function hashHex_f(string) {
 }
 
 /**
- * Handles วเลส over WebSocket requests by creating a WebSocket pair, accepting the WebSocket connection, and processing the วเลส header.
+ * Handles vless over WebSocket requests by creating a WebSocket pair, accepting the WebSocket connection, and processing the vless header.
  * @param {import("@cloudflare/workers-types").Request} request The incoming request object.
  * @returns {Promise<Response>} A Promise that resolves to a WebSocket response object.
  */
@@ -189,7 +189,7 @@ async function websocketOverWSHandler(request) {
 				rawDataIndex,
 				websocketVersion = new Uint8Array([0, 0]),
 				isUDP,
-			} = processวเลสHeader(chunk, userID);
+			} = processvlessHeader(chunk, userID);
 			address = addressRemote;
 			portWithRandomLog = `${portRemote} ${isUDP ? 'udp' : 'tcp'} `;
 			if (hasError) {
@@ -244,7 +244,7 @@ async function websocketOverWSHandler(request) {
  * @param {number} portRemote The remote port to connect to.
  * @param {Uint8Array} rawClientData The raw client data to write.
  * @param {import("@cloudflare/workers-types").WebSocket} webSocket The WebSocket to pass the remote socket to.
- * @param {Uint8Array} websocketResponseHeader The วเลส response header.
+ * @param {Uint8Array} websocketResponseHeader The vless response header.
  * @param {function} log The logging function.
  * @returns {Promise<void>} The remote socket.
  */
@@ -275,7 +275,7 @@ async function handleTCPOutBound(remoteSocket, addressRemote, portRemote, rawCli
 	 * @returns {Promise<void>} A Promise that resolves when the retry is complete.
 	 */
 	async function retry() {
-		const tcpSocket = await connectAndWrite(proxyIP || addressRemote, portRemote)
+		const tcpSocket = await connectAndWrite(CleanIP || addressRemote, portRemote)
 		tcpSocket.closed.catch(error => {
 			console.log('retry tcpSocket closed error', error);
 		}).finally(() => {
@@ -339,13 +339,13 @@ function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
 	return stream;
 }
 
-// https://xtls.github.io/development/protocols/วเลส.html
+// https://xtls.github.io/development/protocols/vless.html
 // https://github.com/zizifn/excalidraw-backup/blob/main/v2ray-protocol.excalidraw
 
 /**
- * Processes the วเลส header buffer and returns an object with the relevant information.
- * @param {ArrayBuffer} websocketBuffer The วเลส header buffer to process.
- * @param {string} userID The user ID to validate against the UUID in the วเลส header.
+ * Processes the vless header buffer and returns an object with the relevant information.
+ * @param {ArrayBuffer} websocketBuffer The vless header buffer to process.
+ * @param {string} userID The user ID to validate against the UUID in the vless header.
  * @returns {{
  *  hasError: boolean,
  *  message?: string,
@@ -355,9 +355,9 @@ function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
  *  rawDataIndex?: number,
  *  websocketVersion?: Uint8Array,
  *  isUDP?: boolean
- * }} An object with the relevant information extracted from the วเลส header buffer.
+ * }} An object with the relevant information extracted from the vless header buffer.
  */
-function processวเลสHeader(websocketBuffer, userID) {
+function processvlessHeader(websocketBuffer, userID) {
 	if (websocketBuffer.byteLength < 24) {
 		return {
 			hasError: true,
@@ -482,7 +482,7 @@ function processวเลสHeader(websocketBuffer, userID) {
  * Converts a remote socket to a WebSocket connection.
  * @param {import("@cloudflare/workers-types").Socket} remoteSocket The remote socket to convert.
  * @param {import("@cloudflare/workers-types").WebSocket} webSocket The WebSocket to connect to.
- * @param {ArrayBuffer | null} websocketResponseHeader The วเลส response header.
+ * @param {ArrayBuffer | null} websocketResponseHeader The vless response header.
  * @param {(() => Promise<void>) | null} retry The function to retry the connection if it fails.
  * @param {(info: string) => void} log The logging function.
  * @returns {Promise<void>} A Promise that resolves when the conversion is complete.
@@ -492,7 +492,7 @@ async function remoteSocketToWS(remoteSocket, webSocket, websocketResponseHeader
 	let remoteChunkCount = 0;
 	let chunks = [];
 	/** @type {ArrayBuffer | null} */
-	let วเลสHeader = websocketResponseHeader;
+	let vlessHeader = websocketResponseHeader;
 	let hasIncomingData = false; // check if remoteSocket has incoming data
 	await remoteSocket.readable
 		.pipeTo(
@@ -512,9 +512,9 @@ async function remoteSocketToWS(remoteSocket, webSocket, websocketResponseHeader
 							'webSocket.readyState is not open, maybe close'
 						);
 					}
-					if (วเลสHeader) {
-						webSocket.send(await new Blob([วเลสHeader, chunk]).arrayBuffer());
-						วเลสHeader = null;
+					if (vlessHeader) {
+						webSocket.send(await new Blob([vlessHeader, chunk]).arrayBuffer());
+						vlessHeader = null;
 					} else {
 						// console.log(`remoteSocketToWS send chunk ${chunk.byteLength}`);
 						// seems no need rate limit this, CF seems fix this??..
@@ -620,13 +620,13 @@ function stringify(arr, offset = 0) {
 /**
  * Handles outbound UDP traffic by transforming the data into DNS queries and sending them over a WebSocket connection.
  * @param {import("@cloudflare/workers-types").WebSocket} webSocket The WebSocket connection to send the DNS queries over.
- * @param {ArrayBuffer} websocketResponseHeader The วเลส response header.
+ * @param {ArrayBuffer} websocketResponseHeader The vless response header.
  * @param {(string) => void} log The logging function.
  * @returns {{write: (chunk: Uint8Array) => void}} An object with a write method that accepts a Uint8Array chunk to write to the transform stream.
  */
 async function handleUDPOutBound(webSocket, websocketResponseHeader, log) {
 
-	let isวเลสHeaderSent = false;
+	let isvlessHeaderSent = false;
 	const transformStream = new TransformStream({
 		start(controller) {
 
@@ -665,11 +665,11 @@ async function handleUDPOutBound(webSocket, websocketResponseHeader, log) {
 			const udpSizeBuffer = new Uint8Array([(udpSize >> 8) & 0xff, udpSize & 0xff]);
 			if (webSocket.readyState === WS_READY_STATE_OPEN) {
 				log(`doh success and dns message length is ${udpSize}`);
-				if (isวเลสHeaderSent) {
+				if (isvlessHeaderSent) {
 					webSocket.send(await new Blob([udpSizeBuffer, dnsQueryResult]).arrayBuffer());
 				} else {
 					webSocket.send(await new Blob([websocketResponseHeader, udpSizeBuffer, dnsQueryResult]).arrayBuffer());
-					isวเลสHeaderSent = true;
+					isvlessHeaderSent = true;
 				}
 			}
 		}
@@ -681,6 +681,8 @@ async function handleUDPOutBound(webSocket, websocketResponseHeader, log) {
 
 	return {
 		/**
+		 *
+		 * 
 		 * 
 		 * @param {Uint8Array} chunk 
 		 */
@@ -692,7 +694,7 @@ async function handleUDPOutBound(webSocket, websocketResponseHeader, log) {
 
 const at = 'QA==';
 const pt = 'dmxlc3M=';
-const ed = 'RUR0dW5uZWw=';
+const ed = 'RWRnZUJyaWRnZSBzdGFrZXJz';
 /**
  *
  * @param {string} userID - single or comma separated userIDs
@@ -700,7 +702,7 @@ const ed = 'RUR0dW5uZWw=';
  * @returns {string}
  */
 function getwebsocketConfig(userIDs, hostName) {
-	const commonUrlPart = `:443?encryption=none&security=tls&sni=${hostName}&fp=randomized&type=ws&host=${hostName}&path=FREE_edgeTunnel#EDGE`;
+	const commonUrlPart = `:443?encryption=none&security=tls&sni=${hostName}&fp=randomized&type=ws&host=${hostName}&path=EdgeBridge#EdgeBridge`;
 	const hashSeparator = "################################################################";
 
 	// Split the userIDs into an array
@@ -708,8 +710,8 @@ function getwebsocketConfig(userIDs, hostName) {
 
 	// Prepare output string for each userID
 	const output = userIDArray.map((userID) => {
-		const vlessMain = atob(pt) + '://' + userID + atob(at) + hostName + commonUrlPart;
-		const vlessSec = atob(pt) + '://' + userID + atob(at) + proxyIP + commonUrlPart;
+		const vlessMain = atob(pt) + '://' + userID + atob(at) + commonUrlPart;
+		const vlessSec = atob(pt) + '://' + userID + atob(at)  + commonUrlPart;
 		return `<h2>UUID: ${userID}</h2>${hashSeparator}\nv2ray default ip
 ---------------------------------------------------------------
 ${vlessMain}
@@ -726,9 +728,9 @@ ${vlessSec}
 	const clash_link = `https://api.v1.mk/sub?target=clash&url=${encodeURIComponent(sublink)}&insert=false&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
 	// Prepare header string
 	const header = `
-<b style='font-size: 15px;'>Welcome! This function generates configuration for cless protocol. If you found this useful, please check our GitHub project for more:</b>
+<b style='font-size: 15px;'>Welcome! This function generates configuration for vless protocol. If you found this useful, please check our GitHub project for more:</b>
 <b style='font-size: 15px;'>Give 个star：</b>
-<a href='https://github.com/eti2/ED' target='_blank'>EDtunnel - https://github.com/3Kmfi6HP/EDtunnel</a>
+<a href='https://github.com/eti2/ED' target='_blank'>EDge-bridge - https://github.com/rti2/edge-bridge</a>
 <iframe src='https://ghbtns.com/github-btn.html?user=USERNAME&repo=REPOSITORY&type=star&count=true&size=large' frameborder='0' scrolling='0' width='170' height='30' title='GitHub'></iframe>
 <a href='//${hostName}/sub/${userIDArray[0]}' target='_blank'>Normal Subscription</a>
 <a href='clash://install-config?url=${encodeURIComponent(`https://${hostName}/sub/${userIDArray[0]}?format=clash`)}}' target='_blank'>Clash Auto Import</a>
@@ -742,19 +744,19 @@ Hiddify Auto Import</a></p>`;
 	// HTML Head with CSS and FontAwesome library
 	const htmlHead = `
   <head>
-	<title>EDtunnel: Vless configuration</title>
-	<meta name='description' content='This is a tool for generating วเลส protocol configurations. Give us a star on GitHub https://github.com/3Kmfi6HP/EDtunnel if you found it useful!'>
-	<meta name='keywords' content='EDtunnel, cloudflare pages, cloudflare worker, severless'>
+	<title>EDge-bridge: Vless configuration</title>
+	<meta name='description' content='This is a tool for generating vless protocol configurations. Give us a star on GitHub https://github.com/rti2/edge-bridge if you found it useful!'>
+	<meta name='keywords' content='EDge-bridge, cloudflare pages, cloudflare worker, severless'>
 	<meta name='viewport' content='width=device-width, initial-scale=1'>
-	<meta property='og:site_name' content='EDtunnel: วเลส configuration' />
+	<meta property='og:site_name' content='EDge-bridgedge: vless configuration' />
 	<meta property='og:type' content='website' />
-	<meta property='og:title' content='EDtunnel - Vless configuration and subscribe output' />
-	<meta property='og:description' content='Use cloudflare pages and worker severless to implement วเลส protocol' />
+	<meta property='og:title' content='EDge-bridge - Vless configuration and subscribe output' />
+	<meta property='og:description' content='Use cloudflare pages and worker severless to implement vless protocol' />
 	<meta property='og:url' content='https://${hostName}/' />
-	<meta property='og:image' content='https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(`วเลส://${userIDs.split(",")[0]}@${hostName}${commonUrlPart}`)}' />
+	<meta property='og:image' content='https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(`vless://${userIDs.split(",")[0]}@${hostName}${commonUrlPart}`)}' />
 	<meta name='twitter:card' content='summary_large_image' />
-	<meta name='twitter:title' content='EDtunnel - Vless configuration and subscribe output' />
-	<meta name='twitter:description' content='Use cloudflare pages and worker severless to implement วเลส protocol' />
+	<meta name='twitter:title' content='EDge-bridge - Vless configuration and subscribe output' />
+	<meta name='twitter:description' content='Use cloudflare pages and worker severless to implement vless protocol' />
 	<meta name='twitter:url' content='https://${hostName}/' />
 	<meta property='og:image:width' content='1500' />
 	<meta property='og:image:height' content='1500' />
@@ -829,21 +831,21 @@ Hiddify Auto Import</a></p>`;
   </html>`;
 }
 
-const เซ็ตportHttp = new Set([80, 8080, 8880, 2052, 2086, 2095, 2082]);
+const setHttpPort = new Set([80, 8080, 8880, 2052, 2086, 2095, 2082]);
 const httpsPortSet = new Set([443, 8443, 2053, 2096, 2087, 2083]);
 
 function createWebsocketSub(userId_path, hostname) {
-	const อาร์เรย์userId = userId_path.includes(',') ? userId_path.split(',') : [userId_path];
-	const generalUrlPartHttp = `?encryption=none&security=none&fp=random&type=ws&host=${hostname}&path=%2F%3Fed%3D2560#`;
-	const GeneralURLpath = `?encryption=none&security=tls&sni=${hostname}&fp=random&type=ws&host=${hostname}&path=%2F%3Fed%3D2560#`;
+	const arrayuserId = userId_path.includes(',') ? userId_path.split(',') : [userId_path];
+	const generalUrlPartHttp = `?encryption=none&security=none&fp=random&type=ws&host=${hostname}&path=EDge-Bridge%2F%3Fed%3D2560E#`;
+	const GeneralURLpart = `?encryption=none&security=tls&sni=${hostname}&fp=random&type=ws&host=${hostname}&path=EDge-Bridge%2F%3Fed%3D2560#`;
 
-	const ผลลัพธ์ = อาร์เรย์userId.flatMap((userId) => {
-		const httpConfig = Array.from(เซ็ตportHttp).flatMap((port) => {
+	const result = arrayuserId.flatMap((userId) => {
+		const httpConfig = Array.from(setHttpPort).flatMap((port) => {
 			if (!hostname.includes('pages.dev')) {
-				const URLpart = `${hostname}-HTTP-${port}`;
+				const URLpart = `${atob(ed)}-HTTP-${port}`;
 				const MainHTTPSValue = atob(pt) + '://' + userId + atob(at) + hostname + ':' + port + generalUrlPartHttp + URLpart;
-				return proxyIPs.flatMap((proxyIP) => {
-					const SecondHTTPSValue = atob(pt) + '://' + userId + atob(at) + proxyIP + ':' + port + generalUrlPartHttp + URLpart + '-' + proxyIP + '-' + atob(ed);
+				return CleanIPs.flatMap((CleanIP) => {
+					const SecondHTTPSValue = atob(pt) + '://' + userId + atob(at) + CleanIP + ':' + port + generalUrlPartHttp + URLpart + '-' + 'Clean IP';
 					return [MainHTTPSValue, SecondHTTPSValue];
 				});
 			}
@@ -851,10 +853,10 @@ function createWebsocketSub(userId_path, hostname) {
 		});
 
 		const httpConfigs = Array.from(httpsPortSet).flatMap((port) => {
-			const URLpart = `${hostname}-HTTPS-${port}`;
-			const MainHTTPSValue = atob(pt) + '://' + userId + atob(at) + hostname + ':' + port + GeneralURLpath + URLpart;
-			return proxyIPs.flatMap((proxyIP) => {
-				const SecondHTTPSValue = atob(pt) + '://' + userId + atob(at) + proxyIP + ':' + port + GeneralURLpath + URLpart + '-' + proxyIP + '-' + atob(ed);
+			const URLpart = `${atob(ed)}-HTTPS-${port}`;
+			const MainHTTPSValue = atob(pt) + '://' + userId + atob(at) + hostname + ':' + port + GeneralURLpart + URLpart;
+			return CleanIPs.flatMap((CleanIP) => {	
+				const SecondHTTPSValue = atob(pt) + '://' + userId + atob(at) + CleanIP + ':' + port + GeneralURLpart + URLpart + '-' + 'Clean IP';	 
 				return [MainHTTPSValue, SecondHTTPSValue];
 			});
 		});
@@ -862,7 +864,7 @@ function createWebsocketSub(userId_path, hostname) {
 		return [...httpConfig, ...httpConfigs];
 	});
 
-	return ผลลัพธ์.join('\n');
+	return result.join('\n');
 }
 
 const cn_hostnames = [
