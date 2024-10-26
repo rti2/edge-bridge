@@ -1,10 +1,10 @@
-# EDtunnel
+# EDge-Bridge
 
 <p align="center">
   <img src="https://cloudflare-ipfs.com/ipfs/bafybeigd6i5aavwpr6wvnwuyayklq3omonggta4x2q7kpmgafj357nkcky" alt="edgetunnel" style="margin-bottom: -50px;">
 </p>
 
-A fork of [https://github.com/rti2/ED](https://github.com/zizifn/edgetunnel)
+A fork of [https://github.com/zizifn/edgetunnel](https://github.com/zizifn/edgetunnel)
 
 [![Repository](https://img.shields.io/badge/View%20on-GitHub-blue.svg)](https://github.com/zizifn/edgetunnel)
 ## Deploy in pages.dev
@@ -17,7 +17,7 @@ A fork of [https://github.com/rti2/ED](https://github.com/zizifn/edgetunnel)
 
 ## Deploy in worker.dev
 
-1. Copy `_worker.js` code from [here](https://github.com/rti2/ED/blob/main/_worker.js).
+1. Copy `_worker.js` code from [here](https://github.com/rti2/edge-bridge/blob/main/_worker.js).
 
 2. Alternatively, you can click the button below to deploy directly.
 
